@@ -37,12 +37,12 @@ typedef unsigned char uByte;
 
 
 
-__global__ void boxKernel(uByte* data, uByte* data2, int size) {
+__global__ void boxKernel(uByte* data, uByte* data2,int w, int h) {
 
 	int PlaceX = ((blockIdx.x *blockDim.x) + threadIdx.x);
 	int PlaceY = (blockIdx.y *blockDim.y) + threadIdx.y;
 
-	if (PlaceX < host_image.cols && PlaceY < host_image.rows) {
+	if (PlaceX < w && PlaceY < h) {
 		int currentPixelSum = data[PlaceX*PlaceY];
 		//w-1,h+1
 		currentPixelSum += data[(PlaceY + 1)*PlaceX - 1];
@@ -98,7 +98,7 @@ void ConvolveGPU(uByte* src, uByte * dst, int W, int H, uByte* kernel, HighPreci
 	int blocksNeeded = (ConvolveSize + 1023) / 1024;
 	cudaDeviceSynchronize();
 
-	boxKernel << < blocksNeeded, 1024 >> > (imageTemp, imageBlurred, ConvolveSize);
+	boxKernel << < blocksNeeded, 1024 >> > (imageTemp, imageBlurred, host_image.cols, host_image.rows);
 
 	cudaTest = cudaMemcpy(dst, imageBlurred, ConvolveSize, cudaMemcpyDeviceToHost);
 	if (cudaTest != cudaSuccess) {
