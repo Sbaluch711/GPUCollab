@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -25,12 +24,16 @@ __constant__ int dev_pattern_size;
 __device__ char * dev_buffer = nullptr;
 __device__ unsigned char * dev_bitmap = nullptr;
 
+__device__ int getGlobalIdx_2D_1D()
+{
+	int blockId = blockIdx.y * gridDim.x + blockIdx.x;
+	int threadId = blockId * blockDim.x + threadIdx.x;
+	return threadId;
+}
 __global__ void SearchGPU_V1(char * buffer, int buffer_size, unsigned char * bitmap, int bitmap_size)
 {
-	//cudaDeviceSynchronize();
-	//cudaError_t CudaSuccess;
-	for (int gIndex = 0; gIndex < buffer_size; gIndex++) {
-		int DPindex;
+	int gIndex = getGlobalIdx_2D_1D();
+	int DPindex;
 		for (DPindex = 0; DPindex < dev_pattern_size; DPindex) {
 			
 			char* temp = buffer + gIndex + DPindex;
@@ -48,15 +51,12 @@ __global__ void SearchGPU_V1(char * buffer, int buffer_size, unsigned char * bit
 			if (byte_number < bitmap_size)
 			{
 				int bit_number = gIndex % 8;
-#if defined(USE_OMP)
-#pragma omp critical
-#endif
 				{
 					*(bitmap + byte_number) |= (1 << bit_number);
 				}
 			}
+
 		}
-	}
 
 }
 
